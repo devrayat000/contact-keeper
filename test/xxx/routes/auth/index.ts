@@ -1,7 +1,8 @@
+// import {Worker} from 'worker_threads'
 import type { FastifyPluginAsync } from "fastify";
 import type { RouteGenericInterface } from "fastify/types/route";
 import { UserTable } from "knex/types/tables";
-import { Schema } from "../../types/schema";
+import { Schema } from "../../../../src/types/schema";
 
 const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.get("/", {

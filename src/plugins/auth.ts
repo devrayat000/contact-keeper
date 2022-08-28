@@ -1,5 +1,5 @@
 import fp from "fastify-plugin";
-import auth, { FastifyAuthFunction } from "fastify-auth";
+import auth, { FastifyAuthFunction } from "@fastify/auth";
 
 export default fp(async (fastify, opts) => {
   void fastify
@@ -67,7 +67,7 @@ const verifyJWTandLevel: FastifyAuthFunction = async function (request, reply) {
 
 const verifyUserAndPassword: FastifyAuthFunction = async function (req, res) {
   const { email, password } = req.body as any;
-  const user = await this.knex("user").where({ email: email }).first();
+  const user = await this.prisma.user.findFirst({ where: { email } });
   if (!user) {
     throw Error("User not found!");
   }
@@ -76,5 +76,5 @@ const verifyUserAndPassword: FastifyAuthFunction = async function (req, res) {
     throw Error("Incorrect Password");
   }
 
-  req.user = user;
+  req.user = { ...user, _id: user.id };
 };

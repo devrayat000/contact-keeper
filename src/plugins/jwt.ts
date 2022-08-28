@@ -3,7 +3,7 @@ import jwt, {
   FastifyJWTOptions,
   FastifyJwtVerifyOptions,
   VerifyPayloadType,
-} from "fastify-jwt";
+} from "@fastify/jwt";
 import { FastifyRequest } from "fastify";
 
 export default fp<FastifyJWTOptions>(async (fastify, opts) => {
@@ -20,7 +20,7 @@ export default fp<FastifyJWTOptions>(async (fastify, opts) => {
     verify: {
       algorithms: ["HS256"],
       ignoreExpiration: undefined,
-      extractToken: request => request.cookies["x-access-token"],
+      extractToken: (request) => request.cookies["x-access-token"],
       // clockTimestamp: Date.now(),
     },
     messages: {
@@ -42,7 +42,7 @@ export default fp<FastifyJWTOptions>(async (fastify, opts) => {
     verify: {
       algorithms: ["HS256"],
       ignoreExpiration: undefined,
-      extractToken: request => request.cookies["x-refresh-token"],
+      extractToken: (request) => request.cookies["x-refresh-token"],
       clockTimestamp: Date.now(),
       clockTolerance: Date.now() + 1 * 60 * 1000,
     },
@@ -110,7 +110,7 @@ declare module "fastify" {
   }
 }
 
-declare module "fastify-jwt" {
+declare module "@fastify/jwt" {
   interface FastifyJWT {
     payload: {
       _id: string;

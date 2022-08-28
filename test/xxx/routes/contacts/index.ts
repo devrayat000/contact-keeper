@@ -5,7 +5,7 @@ import type {
   ContactTableInsert,
   ContactTableUpdate,
 } from "knex/types/tables";
-import type { Schema } from "../../types/schema";
+import type { Schema } from "../../../../src/types/schema";
 
 const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.get<IContact>(

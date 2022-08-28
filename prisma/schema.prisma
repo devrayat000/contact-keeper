@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator nexusPrisma {
+  provider = "nexus-prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid()) @map("_id") @db.Char(25)
+  name      String    @db.VarChar(128)
+  email     String    @unique @db.VarChar(128)
+  hash      String    @db.VarChar(255)
+  salt      String    @db.VarChar(255)
+  contacts  Contact[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Contact {
+  id        String      @id @default(cuid()) @map("_id") @db.Char(25)
+  name      String      @db.VarChar(128)
+  emails    EmailInfo[]
+  phones    PhoneInfo[]
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String      @unique @db.Char(25)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([name])
+}
+
+model EmailInfo {
+  id        String      @id @default(cuid()) @map("_id") @db.Char(25)
+  value     String      @db.VarChar(128)
+  type      ContactType
+  contact   Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String      @unique @db.Char(25)
+
+  @@index([value, type])
+}
+
+model PhoneInfo {
+  id        String      @id @default(cuid()) @map("_id") @db.Char(25)
+  value     String      @db.Char(9)
+  type      ContactType
+  contact   Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String      @unique @db.Char(25)
+
+  @@index([value, type])
+}
+
+enum ContactType {
+  Mobile
+  Home
+  Work
+  Other
+}
