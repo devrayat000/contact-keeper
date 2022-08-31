@@ -20,6 +20,9 @@ model User {
   email     String    @unique @db.VarChar(128)
   hash      String    @db.VarChar(255)
   salt      String    @db.VarChar(255)
+  role      Role      @default(USER)
+  imageUrl  String?
+  imageMime String?   @db.VarChar(128)
   contacts  Contact[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -63,4 +66,9 @@ enum ContactType {
   Home
   Work
   Other
+}
+
+enum Role {
+  ADMIN
+  USER
 }

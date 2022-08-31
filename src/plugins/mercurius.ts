@@ -1,13 +1,19 @@
 import fp from "fastify-plugin";
+import processRequest from "graphql-upload/processRequest.js";
 import { type MercuriusOptions } from "mercurius";
-import { makeSchema } from "nexus";
+import {
+  makeSchema,
+  fieldAuthorizePlugin,
+  connectionPlugin,
+  queryComplexityPlugin,
+} from "nexus";
 import Scalars from "nexus-prisma/scalars";
 
-import { contactQuery, contactType } from "../graphql/schema";
+import * as types from "../graphql/schema";
 import { createContext } from "../utils/gql-context";
 
 const schema = makeSchema({
-  types: [Scalars, contactType, contactQuery],
+  types: [Scalars, types],
   outputs: {
     schema: __dirname + "/../../schema.graphql",
     typegen: __dirname + "/../../src/graphql/generated/nexus.d.ts",
@@ -16,10 +22,15 @@ const schema = makeSchema({
     module: __dirname + "/../../src/utils/gql-context.ts",
     export: "Context",
   },
+  plugins: [
+    fieldAuthorizePlugin(),
+    connectionPlugin(),
+    queryComplexityPlugin(),
+  ],
 });
 
 export default fp<MercuriusOptions>(async (fastify, opts) => {
-  fastify
+  await fastify
     .register(import("mercurius"), {
       schema,
       context(request, reply) {
@@ -31,7 +42,6 @@ export default fp<MercuriusOptions>(async (fastify, opts) => {
       subscription: true,
       graphiql: false,
       ide: false,
-      ...opts,
     })
     .register(import("mercurius-auth"), {
       authContext(context) {
@@ -40,9 +50,29 @@ export default fp<MercuriusOptions>(async (fastify, opts) => {
         };
       },
       async applyPolicy(authDirectiveAST, parent, args, context, info) {
+        console.log(context.auth);
+
         return context.auth?.identity === "admin";
       },
       authDirective: "auth",
-    })
-    .register(import("mercurius-upload"));
+    });
+  // .register(import("@fastify/multipart"), {
+  //   addToBody: true,
+  //   attachFieldsToBody: "keyValues",
+  //   onFile: (filename: any) => {
+  //     console.log(filename);
+  //   },
+  // })
+  // .addHook("preValidation", async (request, reply) => {
+  //   if (!request.isMultipart()) {
+  //     return;
+  //   }
+  //   console.log("here");
+  //   // const a = await request.file();
+  //   request.body = await processRequest(request.raw, reply.raw, {
+  //     maxFiles: 1,
+  //     maxFieldSize: 5 * 1024 ** 2,
+  //   });
+  // });
+  // .register(import("mercurius-upload"));
 });

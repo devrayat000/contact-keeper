@@ -1,3 +1,4 @@
+import * as url from "url";
 import { join } from "path";
 import AutoLoad, { AutoloadPluginOptions } from "@fastify/autoload";
 import { FastifyPluginAsync } from "fastify";
@@ -11,6 +12,15 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts
 ): Promise<void> => {
   // Place here your custom code!
+  await fastify
+    // .register(import("@fastify/multipart"), {
+    //   addToBody: true,
+    //   attachFieldsToBody: "keyValues",
+    //   onFile: (filename: any) => {
+    //     console.log(filename);
+    //   },
+    // })
+    .register(import("mercurius-upload"));
 
   // Do not touch the following lines
 

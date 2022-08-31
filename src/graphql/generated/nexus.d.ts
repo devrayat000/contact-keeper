@@ -5,7 +5,10 @@
 
 
 import type { Context } from "./../../utils/gql-context"
-import type { core } from "nexus"
+import type { UploadType } from "./../../types/graphql-upload"
+import type { FieldAuthorizeResolver } from "nexus/dist/plugins/fieldAuthorizePlugin"
+import type { core, connectionPluginCore } from "nexus"
+import type { QueryComplexity } from "nexus/dist/plugins/queryComplexityPlugin"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
     /**
@@ -29,6 +32,10 @@ declare global {
      * The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
      */
     json<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Json";
+    /**
+     * The `Upload` scalar type represents a file upload.
+     */
+    upload<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Upload";
   }
 }
 declare global {
@@ -54,6 +61,19 @@ declare global {
      * The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
      */
     json<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Json";
+    /**
+     * The `Upload` scalar type represents a file upload.
+     */
+    upload<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Upload";
+    /**
+     * Adds a Relay-style connection to the type, with numerous options for configuration
+     *
+     * @see https://nexusjs.org/docs/plugins/connection
+     */
+    connectionField<FieldName extends string>(
+      fieldName: FieldName,
+      config: connectionPluginCore.ConnectionFieldConfig<TypeName, FieldName>
+    ): void
   }
 }
 
@@ -63,9 +83,18 @@ declare global {
 }
 
 export interface NexusGenInputs {
+  RegisterInput: { // input type
+    email: string; // String!
+    hash: string; // String!
+    image?: NexusGenScalars['Upload'] | null; // Upload
+    name: string; // String!
+    salt: string; // String!
+  }
 }
 
 export interface NexusGenEnums {
+  ContactType: "Home" | "Mobile" | "Other" | "Work"
+  Role: "ADMIN" | "USER"
 }
 
 export interface NexusGenScalars {
@@ -79,6 +108,7 @@ export interface NexusGenScalars {
   DateTime: any
   Decimal: any
   Json: any
+  Upload: UploadType
 }
 
 export interface NexusGenObjects {
@@ -88,7 +118,42 @@ export interface NexusGenObjects {
     name: string; // String!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
+  ContactConnection: { // root type
+    edges?: Array<NexusGenRootTypes['ContactEdge'] | null> | null; // [ContactEdge]
+    pageInfo: NexusGenRootTypes['PageInfo']; // PageInfo!
+  }
+  ContactEdge: { // root type
+    cursor: string; // String!
+    node?: NexusGenRootTypes['Contact'] | null; // Contact
+  }
+  EmailInfo: { // root type
+    id: string; // ID!
+    type: NexusGenEnums['ContactType']; // ContactType!
+    value: string; // String!
+  }
+  Mutation: {};
+  PageInfo: { // root type
+    endCursor?: string | null; // String
+    hasNextPage: boolean; // Boolean!
+    hasPreviousPage: boolean; // Boolean!
+    startCursor?: string | null; // String
+  }
+  PhoneInfo: { // root type
+    id: string; // ID!
+    type: NexusGenEnums['ContactType']; // ContactType!
+    value: string; // String!
+  }
   Query: {};
+  User: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    email: string; // String!
+    id: string; // ID!
+    imageMime?: string | null; // String
+    imageUrl?: string | null; // String
+    name: string; // String!
+    role: NexusGenEnums['Role']; // Role!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
 }
 
 export interface NexusGenInterfaces {
@@ -99,33 +164,132 @@ export interface NexusGenUnions {
 
 export type NexusGenRootTypes = NexusGenObjects
 
-export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
+export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnums
 
 export interface NexusGenFieldTypes {
   Contact: { // field return type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
+    emails: NexusGenRootTypes['EmailInfo'][]; // [EmailInfo!]!
     id: string; // ID!
     name: string; // String!
+    phones: NexusGenRootTypes['PhoneInfo'][]; // [PhoneInfo!]!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    user: NexusGenRootTypes['User']; // User!
+  }
+  ContactConnection: { // field return type
+    edges: Array<NexusGenRootTypes['ContactEdge'] | null> | null; // [ContactEdge]
+    pageInfo: NexusGenRootTypes['PageInfo']; // PageInfo!
+  }
+  ContactEdge: { // field return type
+    cursor: string; // String!
+    node: NexusGenRootTypes['Contact'] | null; // Contact
+  }
+  EmailInfo: { // field return type
+    contact: NexusGenRootTypes['Contact']; // Contact!
+    id: string; // ID!
+    type: NexusGenEnums['ContactType']; // ContactType!
+    value: string; // String!
+  }
+  Mutation: { // field return type
+    register: NexusGenRootTypes['User'] | null; // User
+  }
+  PageInfo: { // field return type
+    endCursor: string | null; // String
+    hasNextPage: boolean; // Boolean!
+    hasPreviousPage: boolean; // Boolean!
+    startCursor: string | null; // String
+  }
+  PhoneInfo: { // field return type
+    contact: NexusGenRootTypes['Contact']; // Contact!
+    id: string; // ID!
+    type: NexusGenEnums['ContactType']; // ContactType!
+    value: string; // String!
   }
   Query: { // field return type
-    contacts: Array<NexusGenRootTypes['Contact'] | null> | null; // [Contact]
+    contacts: NexusGenRootTypes['Contact'][]; // [Contact!]!
+  }
+  User: { // field return type
+    contacts: NexusGenRootTypes['ContactConnection'] | null; // ContactConnection
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    email: string; // String!
+    id: string; // ID!
+    imageMime: string | null; // String
+    imageUrl: string | null; // String
+    name: string; // String!
+    role: NexusGenEnums['Role']; // Role!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
 }
 
 export interface NexusGenFieldTypeNames {
   Contact: { // field return type name
     createdAt: 'DateTime'
+    emails: 'EmailInfo'
     id: 'ID'
     name: 'String'
+    phones: 'PhoneInfo'
     updatedAt: 'DateTime'
+    user: 'User'
+  }
+  ContactConnection: { // field return type name
+    edges: 'ContactEdge'
+    pageInfo: 'PageInfo'
+  }
+  ContactEdge: { // field return type name
+    cursor: 'String'
+    node: 'Contact'
+  }
+  EmailInfo: { // field return type name
+    contact: 'Contact'
+    id: 'ID'
+    type: 'ContactType'
+    value: 'String'
+  }
+  Mutation: { // field return type name
+    register: 'User'
+  }
+  PageInfo: { // field return type name
+    endCursor: 'String'
+    hasNextPage: 'Boolean'
+    hasPreviousPage: 'Boolean'
+    startCursor: 'String'
+  }
+  PhoneInfo: { // field return type name
+    contact: 'Contact'
+    id: 'ID'
+    type: 'ContactType'
+    value: 'String'
   }
   Query: { // field return type name
     contacts: 'Contact'
   }
+  User: { // field return type name
+    contacts: 'ContactConnection'
+    createdAt: 'DateTime'
+    email: 'String'
+    id: 'ID'
+    imageMime: 'String'
+    imageUrl: 'String'
+    name: 'String'
+    role: 'Role'
+    updatedAt: 'DateTime'
+  }
 }
 
 export interface NexusGenArgTypes {
+  Mutation: {
+    register: { // args
+      input: NexusGenInputs['RegisterInput']; // RegisterInput!
+    }
+  }
+  User: {
+    contacts: { // args
+      after?: string | null; // String
+      before?: string | null; // String
+      first?: number | null; // Int
+      last?: number | null; // Int
+    }
+  }
 }
 
 export interface NexusGenAbstractTypeMembers {
@@ -136,9 +300,9 @@ export interface NexusGenTypeInterfaces {
 
 export type NexusGenObjectNames = keyof NexusGenObjects;
 
-export type NexusGenInputNames = never;
+export type NexusGenInputNames = keyof NexusGenInputs;
 
-export type NexusGenEnumNames = never;
+export type NexusGenEnumNames = keyof NexusGenEnums;
 
 export type NexusGenInterfaceNames = never;
 
@@ -191,6 +355,22 @@ declare global {
   interface NexusGenPluginInputTypeConfig<TypeName extends string> {
   }
   interface NexusGenPluginFieldConfig<TypeName extends string, FieldName extends string> {
+    /**
+     * Authorization for an individual field. Returning "true"
+     * or "Promise<true>" means the field can be accessed.
+     * Returning "false" or "Promise<false>" will respond
+     * with a "Not Authorized" error for the field.
+     * Returning or throwing an error will also prevent the
+     * resolver from executing.
+     */
+    authorize?: FieldAuthorizeResolver<TypeName, FieldName>
+    
+    /**
+     * The complexity for an individual field. Return a number
+     * or a function that returns a number to specify the
+     * complexity for this field.
+     */
+    complexity?: QueryComplexity<TypeName, FieldName>
   }
   interface NexusGenPluginInputFieldConfig<TypeName extends string, FieldName extends string> {
   }
